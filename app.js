@@ -19,17 +19,18 @@ app.use('/js',
 app.set('views', './src/views');
 app.set('view engine', 'ejs');
 
-const bookRouter = require('./src/routes/bookRoutes');
+const nav = [
+  { link: '/books', title: 'Books' },
+  { link: 'authors', title: 'Authors' },
+];
+const bookRouter = require('./src/routes/bookRoutes')(nav);
 
 app.use('/books', bookRouter);
 app.get('/', (req, res) => {
   res.render('index',
     {
       title: 'Library',
-      nav: [
-        { link: '/books', title: 'Books' },
-        { link: 'authors', title: 'Authors' },
-      ],
+      nav,
     });
 });
 
