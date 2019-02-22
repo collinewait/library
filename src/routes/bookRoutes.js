@@ -1,65 +1,60 @@
 const express = require('express');
-const sql = require('mssql');
+const { MongoClient, ObjectID } = require('mongodb');
+const debug = require('debug')('app:bookRoutes');
 
 const bookRouter = express.Router();
 
 function router(nav) {
-  const books = [
-    {
-      title: 'War and peace',
-      genre: 'Historical fiction',
-      author: 'Tolstoy',
-      read: false,
-    },
-    {
-      title: 'Less miserables',
-      genre: 'Historical fiction',
-      author: 'Victor Hugo',
-      read: false,
-    },
-    {
-      title: 'The time Machine',
-      genre: 'Science fiction',
-      author: 'H. G. Wells',
-      read: false,
-    },
-  ];
   bookRouter.route('/')
     .get((req, res) => {
-      (async function query() {
-        const request = new sql.Request();
-        const { recordset } = await request.query('select * from books');
-        res.render(
-          'bookListView',
-          {
-            title: 'Li   brary',
-            nav,
-            books: recordset,
-          },
-        );
+      const url = 'mongodb://localhost:27017';
+      const dbName = 'libraryApp';
+      (async function mongo() {
+        let client;
+        try {
+          client = await MongoClient.connect(url);
+          const db = client.db(dbName);
+          const col = await db.collection('books');
+          const books = await col.find().toArray();
+          res.render(
+            'bookListView',
+            {
+              title: 'Library',
+              nav,
+              books,
+            },
+          );
+        } catch (err) {
+          debug(err.stack);
+        }
+        client.close();
       }());
     });
   bookRouter.route('/:id')
-    .all((req, res, next) => {
-      (async function query() {
-        const { id } = req.params;
-        const request = new sql.Request();
-        const { recordset } = await request.input('id', sql.Int, id)
-          .query('select * from books where id = @id');
-        // eslint-disable-next-line prefer-destructuring
-        req.book = recordset[0];
-        next();
-      }());
-    })
     .get((req, res) => {
-      res.render(
-        'bookView',
-        {
-          title: 'Library',
-          nav,
-          book: req.book,
-        },
-      );
+      const { id } = req.params;
+      const url = 'mongodb://localhost:27017';
+      const dbName = 'libraryApp';
+      (async function mongo() {
+        let client;
+        try {
+          client = await MongoClient.connect(url);
+          const db = client.db(dbName);
+          const col = await db.collection('books');
+          const book = await col.findOne({ _id: new ObjectID(id) });
+          debug(book);
+          res.render(
+            'bookView',
+            {
+              title: 'Library',
+              nav,
+              book,
+            },
+          );
+        } catch (err) {
+          debug(err.stack);
+        }
+      }());
     });
   return bookRouter;
 }
