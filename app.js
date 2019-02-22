@@ -3,12 +3,24 @@ const chalk = require('chalk');
 const debug = require('debug')('app');
 const morgan = require('morgan');
 const path = require('path');
+const sql = require('mssql');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(morgan('tiny'));
+const config = {
+  user: 'library',
+  password: 'psLibrary1',
+  server: 'pslibrary.database.windows.net', // you can use "loca\\instance" to connect to the named instance
+  database: '...',
 
+  options: {
+    encrypt: true, // use this if you're on windows Azure
+  },
+};
+
+sql.connect(config).catch(err => debug(err));
+app.use(morgan('tiny'));
 app.use(express.static(path.join(__dirname, '/public/')));
 app.use('/css',
   express.static(path.join(__dirname, '/node_modules/bootstrap/dist/css')));
