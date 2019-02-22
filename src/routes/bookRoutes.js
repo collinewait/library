@@ -1,6 +1,5 @@
 const express = require('express');
 const sql = require('mssql');
-const debug = require('debug')('app:bookRouter');
 
 const bookRouter = express.Router();
 
@@ -27,20 +26,19 @@ function router(nav) {
   ];
   bookRouter.route('/')
     .get((req, res) => {
-      const request = new sql.Request();
+      (async function query() {
+        const request = new sql.Request();
 
-      request.query('select * from books')
-        .then((result) => {
-          debug(result);
-          res.render(
-            'bookListView',
-            {
-              title: 'Li   brary',
-              nav,
-              books: result.recordset,
-            },
-          );
-        });
+        const result = await request.query('select * from books');
+        res.render(
+          'bookListView',
+          {
+            title: 'Li   brary',
+            nav,
+            books: result.recordset,
+          },
+        );
+      }());
     });
   bookRouter.route('/:id')
     .get((req, res) => {
